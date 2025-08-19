@@ -8,6 +8,8 @@ from logger import setup_logging
 import os
 import telebot
 from telebot import types
+from requests.exceptions import ReadTimeout, ConnectionError
+import time
 
 from trader import get_balance, get_position_pnl
 
@@ -56,12 +58,37 @@ def stop_traiding():
 
 def print_balance():
     global chat_id
-    bot.send_message(chat_id, f"Текущий баланс: {get_balance():.2f} USDT")
+    try:
+        balance = get_balance()
+        bot.send_message(chat_id, f"Текущий баланс: {balance:.2f} USDT")
+    except Exception as e:
+        bot.send_message(chat_id, f"Ошибка получения баланса: {str(e)}")
 
 
 def print_pnl():
     global chat_id
-    bot.send_message(chat_id, f"PnL: {get_position_pnl(cfg.SYMBOL)}")
+    try:
+        pnl = get_position_pnl(cfg.SYMBOL)
+        bot.send_message(chat_id, f"PnL: {pnl}")
+    except Exception as e:
+        bot.send_message(chat_id, f"Ошибка получения PnL: {str(e)}")
+
+
+def telegram_polling(logger):
+    """Функция для безопасного запуска polling с обработкой ошибок"""
+    while True:
+        try:
+            # Увеличиваем таймауты для более стабильной работы
+            bot.infinity_polling(
+                timeout=60, 
+                long_polling_timeout=60
+            )
+        except (ReadTimeout, ConnectionError) as e:
+            logger.warning(f"Telegram polling timeout/connection error: {e}")
+            time.sleep(5)  # Пауза перед повторной попыткой
+        except Exception as e:
+            logger.error(f"Unexpected error in telegram polling: {e}")
+            time.sleep(10)  # Большая пауза при неожиданных ошибках
 
 
 def main():
@@ -72,7 +99,7 @@ def main():
     get_symbol_specs(cfg.SYMBOL)
 
     # Запуск Telegram бота в отдельном потоке
-    telegram_thread = threading.Thread(target=bot.infinity_polling, daemon=True)
+    telegram_thread = threading.Thread(target=telegram_polling, args=(logger,), daemon=True)
     telegram_thread.start()
     # Создаём и запускаем стратегию
     traiding_bot = TradingBot(tg_bot=bot, chat_id=chat_id, markup=markup, logger=logger)
@@ -83,7 +110,10 @@ def main():
             traiding_bot.run(traiding_start)  # Основной цикл робота
         except KeyboardInterrupt:
             logger.info("Бот остановлен пользователем. Позиции закрыты")
-            close_position(cfg.SYMBOL)
+            try:
+                close_position(cfg.SYMBOL)
+            except Exception as e:
+                logger.error(f"Ошибка закрытия позиции: {e}")
             break
         except Exception as e:
             logger.error(f"Ошибка: {e}")
