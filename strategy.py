@@ -194,8 +194,8 @@ class TradingBot:
             factor = cfg.DCA_GRID[self.dca_index]
             qty = calc_order_qty(cfg.SYMBOL, cfg.POSITION_SIZE)
             qty = qty * factor
-            self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [DCA level] Add {side} x{factor} at {current_price} (step {step_multiplier}x)", reply_markup=self.markup)
-            self.logger.info(f"[DCA level] Add {side} x{factor} at {current_price} (step {step_multiplier}x)")
+            self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [DCA level] Add {side} x{factor} at {current_price}", reply_markup=self.markup)
+            self.logger.info(f"[DCA level] Add {side} x{factor} at {current_price})")
             place_limit_best(side, qty, cfg.SYMBOL)
             self.dca_index += 1
             self.is_message_dca = False
