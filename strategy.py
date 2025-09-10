@@ -170,12 +170,19 @@ class TradingBot:
             return
 
         current_price = latest_price(cfg.SYMBOL)
-        step_multiplier = 2 ** self.dca_index
         side = self.position_side
 
-        # Расчёт триггерной цены с растущим шагом
-        trigger_price = self.base_price - (cfg.DCA_STEP * step_multiplier) if side == "Buy" else \
-                        self.base_price + (cfg.DCA_STEP * step_multiplier)
+        # Рассчитываем полное расстояние от базовой цены для текущего уровня
+        total_distance = 0
+        step_size = cfg.DCA_STEP
+    
+        for i in range(self.dca_index + 1):
+                total_distance += step_size
+                step_size *= 2
+
+        # Расчёт триггерной цены от базовой цены
+        trigger_price = self.base_price - total_distance if side == "Buy" else \
+                    self.base_price + total_distance
         
         if not self.is_message_dca:
             # print(f'Price to Add: {trigger_price}, DCA level: {self.dca_index + 1}')
