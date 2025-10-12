@@ -12,6 +12,7 @@ from trader import (
     get_position,
     calc_order_qty
 )
+from settings import ONLY_LONG
 
 class TradingBot:
     def __init__(self, tg_bot, chat_id, markup, logger):
@@ -90,7 +91,7 @@ class TradingBot:
             self.is_message_TP = False
 
         # Шорт при коррекции к EMA
-        elif trend == "short" and candle["close"] > candle["ema_fast"] and prev_candle["close"] < prev_candle["ema_fast"]:
+        elif not ONLY_LONG and trend == "short" and candle["close"] > candle["ema_fast"] and prev_candle["close"] < prev_candle["ema_fast"]:
             qty = calc_order_qty(cfg.SYMBOL, cfg.POSITION_SIZE)
             self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [ENTRY] SHORT signal. Size {qty}", reply_markup=self.markup)
             self.logger.info(f"[ENTRY] SHORT signal. Size {qty}")
