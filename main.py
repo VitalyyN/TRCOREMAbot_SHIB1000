@@ -110,7 +110,8 @@ def main():
             break
         except Exception as e:
             logger.error(f"Ошибка: {e}")
-            break
+            time.sleep(10) # Пауза перед повторной попыткой
+            continue
 
 if __name__ == "__main__":
     main()
