@@ -38,6 +38,7 @@ class TradingBot:
         self.is_stoped = True  # # Флаг: был ли трейдинг остановлен
         self.close_on_stop = True  # Флаг: закрывать ли позицию при остановке
         self.load_state()
+        self.is_stoped = True # Принудительно устанавливаем состояние "остановлен" при запуске
 
     def load_state(self):
         """Загружает состояние бота из файла."""

@@ -1,13 +1,14 @@
 {
-    "in_position": false,
-    "position_side": "",
-    "base_price": 0.0,
+    "in_position": true,
+    "position_side": "Buy",
+    "base_price": 0.006688,
     "dca_index": 0,
-    "last_trend": null,
+    "last_trend": "short",
     "limit_order_plased": false,
     "breakeven_set": false,
-    "is_message_dca": false,
-    "is_message_TP": false,
-    "is_message_trend_change": false,
-    "is_stoped": true
+    "is_message_dca": true,
+    "is_message_TP": true,
+    "is_message_trend_change": true,
+    "is_stoped": true,
+    "close_on_stop": true
 }
