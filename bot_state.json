@@ -1,0 +1,13 @@
+{
+    "in_position": false,
+    "position_side": "",
+    "base_price": 0.0,
+    "dca_index": 0,
+    "last_trend": null,
+    "limit_order_plased": false,
+    "breakeven_set": false,
+    "is_message_dca": false,
+    "is_message_TP": false,
+    "is_message_trend_change": false,
+    "is_stoped": true
+}

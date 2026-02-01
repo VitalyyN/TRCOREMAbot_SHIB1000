@@ -7,6 +7,7 @@ services:
       - ./.env:/app/.env           # Монтируем .env с хоста
       - ./settings.py:/app/settings.py  # Монтируем settings.py с хоста
       - ./logs:/app/logs           # Директория для логов
+      - ./bot_state.json:/app/bot_state.json # Файл состояния робота
     environment:
       - TZ=Europe/Moscow           # Опционально: временная зона
     logging:

@@ -13,6 +13,10 @@ from trader import (
     calc_order_qty
 )
 from settings import ONLY_LONG
+import json
+import os
+
+STATE_FILE = "bot_state.json"
 
 class TradingBot:
     def __init__(self, tg_bot, chat_id, markup, logger):
@@ -32,6 +36,31 @@ class TradingBot:
         self.is_message_TP = False  # Флаг: выводилось ли сообщение о выставленном TP
         self.is_message_trend_change = False  # Флаг: выводилось ли сообщение о смене тренда
         self.is_stoped = True  # # Флаг: был ли трейдинг остановлен
+        self.load_state()
+
+    def load_state(self):
+        """Загружает состояние бота из файла."""
+        if os.path.exists(STATE_FILE):
+            try:
+                with open(STATE_FILE, 'r') as f:
+                    state = json.load(f)
+                    if state:
+                        self.in_position = state.get('in_position', self.in_position)
+                        self.position_side = state.get('position_side', self.position_side)
+                        self.base_price = state.get('base_price', self.base_price)
+                        self.dca_index = state.get('dca_index', self.dca_index)
+                        self.last_trend = state.get('last_trend', self.last_trend)
+                        self.limit_order_plased = state.get('limit_order_plased', self.limit_order_plased)
+                        self.breakeven_set = state.get('breakeven_set', self.breakeven_set)
+                        self.is_message_dca = state.get('is_message_dca', self.is_message_dca)
+                        self.is_message_TP = state.get('is_message_TP', self.is_message_TP)
+                        self.is_message_trend_change = state.get('is_message_trend_change', self.is_message_trend_change)
+                        self.is_stoped = state.get('is_stoped', self.is_stoped)
+                        self.logger.info("Состояние бота успешно загружено.")
+            except (json.JSONDecodeError, IOError) as e:
+                self.logger.warning(f"Не удалось загрузить состояние: {e}. Начинаем с чистого листа.")
+        else:
+            self.logger.info("Файл состояния не найден. Начинаем с чистого листа.")
 
     def update_candles(self) -> pd.DataFrame:
         """
@@ -89,6 +118,7 @@ class TradingBot:
             self.breakeven_set = False
             self.is_message_dca = False
             self.is_message_TP = False
+            self.save_state()
 
         # Шорт при коррекции к EMA
         elif not ONLY_LONG and trend == "short" and candle["close"] > candle["ema_fast"] and prev_candle["close"] < prev_candle["ema_fast"]:
@@ -104,6 +134,7 @@ class TradingBot:
             self.breakeven_set = False
             self.is_message_dca = False
             self.is_message_TP = False
+            self.save_state()
 
     def check_exit(self):
         """
@@ -122,6 +153,7 @@ class TradingBot:
                 return
         else:
             self.limit_order_plased = False
+            self.save_state()
 
         # Расчёт цели тейк-профита
         target = avg_price * (1 + cfg.TAKE_PROFIT) if side == "Buy" else \
@@ -200,6 +232,7 @@ class TradingBot:
             place_limit_best(side, qty, cfg.SYMBOL)
             self.dca_index += 1
             self.is_message_dca = False
+            self.save_state()
 
     def reset_position(self):
         """
@@ -213,13 +246,37 @@ class TradingBot:
         self.breakeven_set = False
         self.is_message_trend_change = False
         # print('============================================\n')
+        self.save_state()
+
+    def save_state(self):
+        """Сохраняет текущее состояние бота в файл."""
+        state = {
+            'in_position': self.in_position,
+            'position_side': self.position_side,
+            'base_price': self.base_price,
+            'dca_index': self.dca_index,
+            'last_trend': self.last_trend,
+            'limit_order_plased': self.limit_order_plased,
+            'breakeven_set': self.breakeven_set,
+            'is_message_dca': self.is_message_dca,
+            'is_message_TP': self.is_message_TP,
+            'is_message_trend_change': self.is_message_trend_change,
+            'is_stoped': self.is_stoped,
+        }
+        try:
+            with open(STATE_FILE, 'w') as f:
+                json.dump(state, f, indent=4)
+        except IOError as e:
+            self.logger.error(f"Не удалось сохранить состояние: {e}")
 
     def run(self, traiding_flag):
         """
         Главный цикл: следим за свечами, сигналами и позициями.
         """
         if traiding_flag:
-            self.is_stoped = False
+            if self.is_stoped:
+                self.is_stoped = False
+                self.save_state()
             try:
                 df = self.update_candles()
 
@@ -237,5 +294,6 @@ class TradingBot:
             close_position(cfg.SYMBOL)
             self.tg_bot.send_message(self.chat_id, "[STOP TRAIDING] Торговля остановлена. Все позиции закрыты", reply_markup=self.markup)
             self.is_stoped = True
+            self.save_state()
 
         time.sleep(3)  # Пауза между итерациями            
