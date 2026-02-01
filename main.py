@@ -20,30 +20,16 @@ bot = telebot.TeleBot(os.getenv("TELEGRAM_TOKEN"))
 
 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 btn1 = types.KeyboardButton("Start_trading")
-btn2 = types.KeyboardButton('Stop_trading')
+btn2 = types.KeyboardButton('STOP_TRADING_CLOSE')
 btn3 = types.KeyboardButton('Balance')
 btn4 = types.KeyboardButton('PnL')
-markup.add(btn1, btn2, btn3, btn4)
+btn5 = types.KeyboardButton('STOP_TRADING_SAVE')
+markup.add(btn1, btn2, btn5, btn3, btn4)
 
 @bot.message_handler(commands=['start'])
 def start(message):
     global chat_id, markup
     bot.send_message(chat_id, "Выберите действие", reply_markup=markup)
-    
-
-@bot.message_handler(content_types=['text'])
-def get_text_messages(message):
-    global chat_id, markup
-    if message.text == "Start_trading":
-        bot.send_message(chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [BOT ACTIVE] Awaiting signals...", reply_markup=markup)
-        start_traiding()
-    elif message.text == "Stop_trading":
-        stop_traiding()
-        bot.send_message(chat_id, message.text, reply_markup=markup)
-    elif message.text == "Balance":
-        print_balance()
-    elif message.text == "PnL":
-        print_pnl()
 
 
 def start_traiding():
@@ -51,9 +37,16 @@ def start_traiding():
     traiding_start = True
 
 
-def stop_traiding():
+def stop_traiding(traiding_bot):
     global traiding_start
     traiding_start = False
+    traiding_bot.close_on_stop = True
+
+
+def stop_traiding_save(traiding_bot):
+    global traiding_start
+    traiding_start = False
+    traiding_bot.close_on_stop = False
 
 
 def print_balance():
@@ -74,23 +67,6 @@ def print_pnl():
         bot.send_message(chat_id, f"Ошибка получения PnL: {str(e)}")
 
 
-def telegram_polling(logger):
-    """Функция для безопасного запуска polling с обработкой ошибок"""
-    while True:
-        try:
-            # Увеличиваем таймауты для более стабильной работы
-            bot.infinity_polling(
-                timeout=60, 
-                long_polling_timeout=60
-            )
-        except (ReadTimeout, ConnectionError) as e:
-            logger.warning(f"Telegram polling timeout/connection error: {e}")
-            time.sleep(5)  # Пауза перед повторной попыткой
-        except Exception as e:
-            logger.error(f"Unexpected error in telegram polling: {e}")
-            time.sleep(10)  # Большая пауза при неожиданных ошибках
-
-
 def main():
     logger = setup_logging()
     logger.info("Запуск торгового бота...")
@@ -98,15 +74,32 @@ def main():
     # Загрузить спецификацию символа: tickSize, minQty и т.п.
     get_symbol_specs(cfg.SYMBOL)
 
-    # Запуск Telegram бота в отдельном потоке
-    telegram_thread = threading.Thread(target=telegram_polling, args=(logger,), daemon=True)
-    telegram_thread.start()
     # Создаём и запускаем стратегию
     traiding_bot = TradingBot(tg_bot=bot, chat_id=chat_id, markup=markup, logger=logger)
 
+    @bot.message_handler(content_types=['text'])
+    def get_text_messages(message):
+        global chat_id, markup
+        if message.text == "Start_trading":
+            bot.send_message(chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [BOT ACTIVE] Awaiting signals...", reply_markup=markup)
+            start_traiding()
+        elif message.text == "STOP_TRADING_CLOSE":
+            stop_traiding(traiding_bot)
+            bot.send_message(chat_id, message.text, reply_markup=markup)
+        elif message.text == "STOP_TRADING_SAVE":
+            stop_traiding_save(traiding_bot)
+            bot.send_message(chat_id, message.text, reply_markup=markup)
+        elif message.text == "Balance":
+            print_balance()
+        elif message.text == "PnL":
+            print_pnl()
+
+    # Запуск Telegram бота в отдельном потоке
+    telegram_thread = threading.Thread(target=bot.infinity_polling, args=(), kwargs={'timeout': 60, 'long_polling_timeout': 60}, daemon=True)
+    telegram_thread.start()
+
     while True:
         try:
-            # print(traiding_start)
             traiding_bot.run(traiding_start)  # Основной цикл робота
         except KeyboardInterrupt:
             logger.info("Бот остановлен пользователем. Позиции закрыты")

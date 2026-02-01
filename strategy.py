@@ -36,6 +36,7 @@ class TradingBot:
         self.is_message_TP = False  # Флаг: выводилось ли сообщение о выставленном TP
         self.is_message_trend_change = False  # Флаг: выводилось ли сообщение о смене тренда
         self.is_stoped = True  # # Флаг: был ли трейдинг остановлен
+        self.close_on_stop = True  # Флаг: закрывать ли позицию при остановке
         self.load_state()
 
     def load_state(self):
@@ -56,6 +57,7 @@ class TradingBot:
                         self.is_message_TP = state.get('is_message_TP', self.is_message_TP)
                         self.is_message_trend_change = state.get('is_message_trend_change', self.is_message_trend_change)
                         self.is_stoped = state.get('is_stoped', self.is_stoped)
+                        self.close_on_stop = state.get('close_on_stop', self.close_on_stop)
                         self.logger.info("Состояние бота успешно загружено.")
             except (json.JSONDecodeError, IOError) as e:
                 self.logger.warning(f"Не удалось загрузить состояние: {e}. Начинаем с чистого листа.")
@@ -262,6 +264,7 @@ class TradingBot:
             'is_message_TP': self.is_message_TP,
             'is_message_trend_change': self.is_message_trend_change,
             'is_stoped': self.is_stoped,
+            'close_on_stop': self.close_on_stop,
         }
         try:
             with open(STATE_FILE, 'w') as f:
@@ -291,9 +294,12 @@ class TradingBot:
                 self.logger.info(e)
 
         if not self.is_stoped and not traiding_flag:
-            close_position(cfg.SYMBOL)
-            self.tg_bot.send_message(self.chat_id, "[STOP TRAIDING] Торговля остановлена. Все позиции закрыты", reply_markup=self.markup)
+            if self.close_on_stop:
+                close_position(cfg.SYMBOL)
+                self.tg_bot.send_message(self.chat_id, "[STOP & CLOSE] Торговля остановлена. Все позиции закрыты", reply_markup=self.markup)
+            else:
+                self.tg_bot.send_message(self.chat_id, "[STOP & SAVE] Торговля остановлена. Позиция сохранена.", reply_markup=self.markup)
             self.is_stoped = True
             self.save_state()
-
-        time.sleep(3)  # Пауза между итерациями            
+            self.close_on_stop = True # Сбрасываем флаг на значение по умолчанию
+            
