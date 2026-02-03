@@ -20,10 +20,10 @@ bot = telebot.TeleBot(os.getenv("TELEGRAM_TOKEN"))
 
 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
 btn1 = types.KeyboardButton("Start_trading")
-btn2 = types.KeyboardButton('STOP_TRADING_CLOSE')
+btn2 = types.KeyboardButton('Stop_&_Close')
 btn3 = types.KeyboardButton('Balance')
 btn4 = types.KeyboardButton('PnL')
-btn5 = types.KeyboardButton('STOP_TRADING_SAVE')
+btn5 = types.KeyboardButton('Stop_&_Save')
 markup.add(btn1, btn2, btn5, btn3, btn4)
 
 @bot.message_handler(commands=['start'])
@@ -83,10 +83,10 @@ def main():
         if message.text == "Start_trading":
             bot.send_message(chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [BOT ACTIVE] Awaiting signals...", reply_markup=markup)
             start_traiding()
-        elif message.text == "STOP_TRADING_CLOSE":
+        elif message.text == "Stop_&_Close":
             stop_traiding(traiding_bot)
             bot.send_message(chat_id, message.text, reply_markup=markup)
-        elif message.text == "STOP_TRADING_SAVE":
+        elif message.text == "Stop_&_Save":
             stop_traiding_save(traiding_bot)
             bot.send_message(chat_id, message.text, reply_markup=markup)
         elif message.text == "Balance":

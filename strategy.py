@@ -61,7 +61,7 @@ class TradingBot:
                         self.close_on_stop = state.get('close_on_stop', self.close_on_stop)
                         self.logger.info("Состояние бота успешно загружено.")
             except (json.JSONDecodeError, IOError) as e:
-                self.logger.warning(f"Не удалось загрузить состояние: {e}. Начинаем с чистого листа.")
+                self.logger.info(f"Не удалось загрузить состояние: {e}. Начинаем с чистого листа.")
         else:
             self.logger.info("Файл состояния не найден. Начинаем с чистого листа.")
 
@@ -195,6 +195,7 @@ class TradingBot:
                     self.is_message_trend_change = True
                 if current_price <= exit_price:
                     self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [TP Not Loss] Closing {side} at {current_price} (avg: {avg_price})", reply_markup=self.markup)
+                    self.logger.info(f"[TP Not Loss] Closing {side} at {current_price} (avg: {avg_price})")
                     close_position(cfg.SYMBOL)
                     self.reset_position()
 
