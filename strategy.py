@@ -110,8 +110,8 @@ class TradingBot:
         # Лонг при коррекции к EMA
         if trend == "long" and candle["close"] < candle["ema_fast"] and prev_candle["close"] > prev_candle["ema_fast"]:
             qty = calc_order_qty(cfg.SYMBOL, cfg.POSITION_SIZE)
-            self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [ENTRY] LONG signal. Size {qty}", reply_markup=self.markup)
-            self.logger.info(f" [ENTRY] LONG signal. Size {qty}")
+            self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [ENTRY] LONG signal. Size {qty} at {candle['close']}", reply_markup=self.markup)
+            self.logger.info(f" [ENTRY] LONG signal. Size {qty} at {candle['close']}")
             if place_limit_best("Buy", qty, cfg.SYMBOL):
                 self.limit_order_plased = True            
             self.in_position = True
@@ -126,8 +126,8 @@ class TradingBot:
         # Шорт при коррекции к EMA
         elif not ONLY_LONG and trend == "short" and candle["close"] > candle["ema_fast"] and prev_candle["close"] < prev_candle["ema_fast"]:
             qty = calc_order_qty(cfg.SYMBOL, cfg.POSITION_SIZE)
-            self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [ENTRY] SHORT signal. Size {qty}", reply_markup=self.markup)
-            self.logger.info(f"[ENTRY] SHORT signal. Size {qty}")
+            self.tg_bot.send_message(self.chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [ENTRY] SHORT signal. Size {qty} at {candle['close']}", reply_markup=self.markup)
+            self.logger.info(f"[ENTRY] SHORT signal. Size {qty} at {candle['close']}")
             if place_limit_best("Sell", qty, cfg.SYMBOL):
                 self.limit_order_plased = True
             self.in_position = True
