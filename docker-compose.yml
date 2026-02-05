@@ -1,7 +1,7 @@
 services:
-  trading-bot:
+  trading-bot: # <-- Измените это имя на уникальное для каждой монеты (например, trading-bot-shib1000)
     build: .
-    container_name: trading-bot
+    container_name: trading-bot # <-- Измените это имя на уникальное для каждой монеты (например, trading-bot-shib1000)
     restart: unless-stopped
     volumes:
       - ./.env:/app/.env           # Монтируем .env с хоста
