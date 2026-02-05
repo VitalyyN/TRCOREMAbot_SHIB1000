@@ -1,5 +1,5 @@
 # Настройки для торговли
-ONLY_LONG = True
+ONLY_LONG = False
 
 EMA_FAST  = 50
 EMA_SLOW  = 60

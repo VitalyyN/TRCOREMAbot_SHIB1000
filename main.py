@@ -19,7 +19,7 @@ traiding_start = False
 bot = telebot.TeleBot(os.getenv("TELEGRAM_TOKEN"))
 
 markup = types.ReplyKeyboardMarkup(resize_keyboard=True)
-btn1 = types.KeyboardButton("Start_trading")
+btn1 = types.KeyboardButton("Start_bot")
 btn2 = types.KeyboardButton('Stop_&_Close')
 btn3 = types.KeyboardButton('Balance')
 btn4 = types.KeyboardButton('PnL')
@@ -80,7 +80,7 @@ def main():
     @bot.message_handler(content_types=['text'])
     def get_text_messages(message):
         global chat_id, markup
-        if message.text == "Start_trading":
+        if message.text == "Start_bot":
             bot.send_message(chat_id, f"{datetime.now().strftime('%H:%M:%S %d-%m-%Y')} [BOT ACTIVE] Awaiting signals...", reply_markup=markup)
             start_traiding()
         elif message.text == "Stop_&_Close":
