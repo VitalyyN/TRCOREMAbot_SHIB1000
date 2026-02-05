@@ -193,5 +193,4 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-settings.py
 bot_state.json
